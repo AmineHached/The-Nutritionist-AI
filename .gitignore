@@ -1,2 +1,15 @@
-data/
+# Angular / Node
+node_modules/
+dist/
+.angular/
+
+# IDE
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+
+# Env
 .env
+.venv/
