@@ -45,45 +45,59 @@ def train_model(data_dir, num_epochs=10, batch_size=32, model_save_path="food_mo
 
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
-    # Training Loop
-    model.train()
-    for epoch in range(num_epochs):
-        running_loss = 0.0
-        corrects = 0
-        total = 0
-        
-        for inputs, labels in train_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-            
-            optimizer.zero_grad()
-            
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            
-            loss.backward()
-            optimizer.step()
-            
-            running_loss += loss.item() * inputs.size(0)
-            _, preds = torch.max(outputs, 1)
-            corrects += torch.sum(preds == labels.data)
-            total += labels.size(0)
-            
-        epoch_loss = running_loss / total
-        epoch_acc = corrects.double() / total
-        
-        logger.info(f"Epoch {epoch}/{num_epochs - 1} | Loss: {epoch_loss:.4f} | Acc: {epoch_acc:.4f}")
-        
-    # Save Model
-    torch.save(model.state_dict(), model_save_path)
-    logger.info(f"Model saved to {model_save_path}")
-    
-    # Save Class Mapping
+    # Save Class Mapping immediately so inference works even if training stops
     import json
     classes_path = model_save_path.replace(".pth", "_classes.json")
     with open(classes_path, "w") as f:
         json.dump(train_dataset.classes, f)
     logger.info(f"Class mapping saved to {classes_path}")
+
+    # Training Loop
+    from tqdm import tqdm
+    
+    model.train()
+    try:
+        for epoch in range(num_epochs):
+            running_loss = 0.0
+            corrects = 0
+            total = 0
+            
+            # Add progress bar
+            pbar = tqdm(train_loader, desc=f"Epoch {epoch}/{num_epochs - 1}")
+            for inputs, labels in pbar:
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+                
+                optimizer.zero_grad()
+                
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                
+                loss.backward()
+                optimizer.step()
+                
+                running_loss += loss.item() * inputs.size(0)
+                _, preds = torch.max(outputs, 1)
+                corrects += torch.sum(preds == labels.data)
+                total += labels.size(0)
+                
+                # Update progress bar
+                current_acc = corrects.double() / total
+                pbar.set_postfix(loss=loss.item(), acc=f"{current_acc:.2%}")
+                
+            epoch_loss = running_loss / total
+            epoch_acc = corrects.double() / total
+            
+            logger.info(f"Epoch {epoch}/{num_epochs - 1} | Loss: {epoch_loss:.4f} | Acc: {epoch_acc:.4f}")
+            
+            # SAVE CHECKPOINT after every epoch
+            torch.save(model.state_dict(), model_save_path)
+            logger.info(f"Checkpoint saved to {model_save_path}")
+
+    except KeyboardInterrupt:
+        logger.info("Training interrupted by user. Saving current state...")
+        torch.save(model.state_dict(), model_save_path)
+        logger.info(f"Final state saved to {model_save_path}")
 
 if __name__ == "__main__":
     import argparse
