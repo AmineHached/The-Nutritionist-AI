@@ -16,8 +16,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def train_model(data_dir, num_epochs=10, batch_size=32, model_save_path="food_model.pth"):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info(f"Using device: {device}")
+    # FORCE CPU: The user's RTX 5060 Ti (sm_120) is too new for current PyTorch stable binaries.
+    # Since we are using a dummy dataset, CPU is instant anyway.
+    device = torch.device("cpu")
+    logger.info(f"Using device: {device} (Forced CPU for compatibility)")
     
     # Setup Data
     train_dataset = FoodDataset(data_dir=data_dir, split='train', transform=get_transforms(is_train=True), download=True)
@@ -75,7 +77,19 @@ def train_model(data_dir, num_epochs=10, batch_size=32, model_save_path="food_mo
     # Save Model
     torch.save(model.state_dict(), model_save_path)
     logger.info(f"Model saved to {model_save_path}")
+    
+    # Save Class Mapping
+    import json
+    classes_path = model_save_path.replace(".pth", "_classes.json")
+    with open(classes_path, "w") as f:
+        json.dump(train_dataset.classes, f)
+    logger.info(f"Class mapping saved to {classes_path}")
 
 if __name__ == "__main__":
-    DATA_DIR = "data"
-    train_model(DATA_DIR)
+    import argparse
+    parser = argparse.ArgumentParser(description='Train Food Vision Model')
+    parser.add_argument('--epochs', type=int, default=10, help='Number of epochs')
+    parser.add_argument('--data_dir', type=str, default='data', help='Data directory')
+    args = parser.parse_args()
+    
+    train_model(args.data_dir, num_epochs=args.epochs)

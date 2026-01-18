@@ -21,12 +21,21 @@ class VisionService:
         return cls._instance
 
     def load_model(self, model_path="food_model.pth", num_classes=5):
-        # We need to know num_classes ahead of time or store it with the model
-        # For simplicity in this demo, we assume 5 placeholder classes or 
-        # we load it from a metadata file if we had one.
+        import json
         
-        # In a real scenario, save classes.json alongside .pth
-        
+        # Check for classes file
+        classes_path = model_path.replace(".pth", "_classes.json")
+        if os.path.exists(classes_path):
+            try:
+                with open(classes_path, "r") as f:
+                    self.classes = json.load(f)
+                num_classes = len(self.classes)
+                logger.info(f"Loaded {num_classes} classes from {classes_path}")
+            except Exception as e:
+                logger.error(f"Failed to load classes file: {e}")
+        else:
+            logger.warning("No classes file found. Using default/fallback.")
+
         try:
             logger.info(f"Loading custom vision model from {model_path}...")
             # Reconstruct model architecture
@@ -65,14 +74,10 @@ class VisionService:
                 probs = torch.nn.functional.softmax(outputs, dim=1)
                 conf, preds = torch.max(probs, 1)
                 
-                # Mock class mapping if not set
-                # In production, self.classes would be populated
                 predicted_idx = preds.item()
                 confidence = conf.item()
                 
-                # If we had a class mapping, we would use it here.
-                # label = self.classes[predicted_idx] if self.classes else f"Class_{predicted_idx}"
-                label = f"Class_{predicted_idx}"
+                label = self.classes[predicted_idx] if self.classes and predicted_idx < len(self.classes) else f"Class_{predicted_idx}"
                 return {"label": label, "confidence": confidence}
                 
         except Exception as e:
