@@ -24,6 +24,16 @@ from backend.routers import analysis, coach
 app.include_router(analysis.router, prefix="/api")
 app.include_router(coach.router, prefix="/api")
 
+@app.on_event("startup")
+async def startup_event():
+    from backend.vision.inference import vision_service
+    # Assuming running from root directory where food_model.pth is located
+    model_loaded = vision_service.load_model("food_model.pth")
+    if model_loaded:
+        print("Startup: Vision model loaded successfully.")
+    else:
+        print("Startup: Warning - Vision model could not be loaded.")
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "The Nutritionist AI"}

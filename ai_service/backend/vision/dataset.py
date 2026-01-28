@@ -76,17 +76,23 @@ class FoodDataset(Dataset):
             with tarfile.open(tar_path, "r:gz") as tar:
                 tar.extractall(path=self.data_dir)
             logger.info("Extraction complete!")
-            # Cleanup tar file to save space? User might want to keep it. 
-            # os.remove(tar_path) 
         except Exception as e:
             logger.error(f"Extraction failed: {e}")
+            logger.warning("Deleting corrupted data to force re-download next time...")
+            import shutil
+            if self.root_dir.exists():
+                shutil.rmtree(self.root_dir)
+            if tar_path.exists():
+                os.remove(tar_path)
+            raise e
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
         path, target = self.samples[idx]
-        from PIL import Image
+        from PIL import Image, ImageFile
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
         img = Image.open(path).convert('RGB')
         
         if self.transform:

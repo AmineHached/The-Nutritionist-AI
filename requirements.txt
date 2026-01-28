@@ -6,3 +6,7 @@ requests
 pillow
 groq
 httpx
+torch
+torchvision
+chromadb
+sentence-transformers

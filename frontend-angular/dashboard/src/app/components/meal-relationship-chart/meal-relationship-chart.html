@@ -1,0 +1,13 @@
+<div class="card">
+  <h3>Calories per Meal relationship</h3>
+
+  <div *ngIf="!isBrowser">Loading chart...</div>
+
+  <canvas
+    *ngIf="isBrowser"
+    baseChart
+    [data]="scatterData"
+    [options]="scatterOptions"
+    [type]="'scatter'">
+  </canvas>
+</div>

@@ -1,0 +1,12 @@
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+}
+canvas {
+  display: block;
+  height: 260px !important;
+}
+h3 { margin: 0 0 8px 0; }

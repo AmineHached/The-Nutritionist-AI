@@ -1,0 +1,30 @@
+.tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--text);
+}
+
+.tbl th {
+  text-align: left;
+  font-size: 15px;
+  color: #000; /* clear, strong header text */
+  font-weight: 700;
+  padding: 12px 14px;
+  border-bottom: 2px solid #000; /* black underline as requested */
+  background: #F9FAFB;
+}
+
+
+.tbl td {
+  padding: 14px 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  font-size: 14px;
+  height: 56px;
+}
+
+.tbl tbody tr:hover {
+  background: rgba(78,121,167,0.04);
+}
+
+.food { font-weight: 700; }

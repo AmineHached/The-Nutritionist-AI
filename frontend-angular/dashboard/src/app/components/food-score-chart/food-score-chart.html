@@ -1,0 +1,14 @@
+<div class="card">
+  <h3>Calories per Food Score</h3>
+
+  <div *ngIf="!isBrowser">Loading chart...</div>
+
+  <canvas
+    *ngIf="isBrowser"
+    baseChart
+    [data]="barData"
+    [options]="barOptions"
+    [type]="'bar'">
+  </canvas>
+</div>
+
