@@ -11,7 +11,7 @@ jobs:
   train:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -30,7 +30,7 @@ jobs:
         python ai_service/backend/vision/train.py --epochs 2 --data_dir ai_service/data
       
     - name: Archive Model
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: food-model
         path: food_model.pth
