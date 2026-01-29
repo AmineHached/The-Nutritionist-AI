@@ -10,3 +10,5 @@ torch
 torchvision
 chromadb
 sentence-transformers
+mlflow
+dvc
