@@ -24,6 +24,14 @@ public class History {
 
 
     private String action; // ou message, description, etc.4
+    
+    private Double calories;
+    private Double protein;
+    private Double carbs;
+    private Double fat;
+    
+    @Column(length = 2000)
+    private String foodItems; // Comma separated list of food items
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

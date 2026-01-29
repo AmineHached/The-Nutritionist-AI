@@ -29,12 +29,16 @@ class CoachRequest(BaseModel):
     message: str
     history: List[dict] = [] # List of {"role": "user"/"assistant", "content": "str"}
     context_data: Optional[str] = None # Previous analysis context
+    user_email: Optional[str] = "user@example.com"
+    session_id: Optional[int] = None
 
 class CoachResponse(BaseModel):
     reply: str
+    session_id: Optional[int] = None
 
 class TitleRequest(BaseModel):
     history: List[dict]
+    session_id: Optional[int] = None
 
 class TitleResponse(BaseModel):
     title: str

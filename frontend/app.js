@@ -136,7 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('file', imageBlob, 'capture.jpg');
 
         try {
-            const response = await fetch('/api/analyze', { method: 'POST', body: formData });
+            const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
+            const response = await fetch(`/api/analyze?user_email=${encodeURIComponent(userEmail)}`, { method: 'POST', body: formData });
             if (!response.ok) throw new Error('Analysis failed');
             const data = await response.json();
 
@@ -331,9 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const loadingId = 'loading-' + Date.now();
         appendMessage('...', 'ai', loadingId);
 
-        // Check for context
-        const lastAnalysis = localStorage.getItem('analysisResults');
-        const contextData = lastAnalysis ? lastAnalysis : null;
+        const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
 
         try {
             const response = await fetch('/api/coach/chat', {
@@ -342,7 +341,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     message: text,
                     history: chatHistory.slice(0, -1),
-                    context_data: contextData
+                    context_data: contextData,
+                    user_email: userEmail,
+                    session_id: (typeof currentSessionId === 'number' && currentSessionId > 1000000000000) ? null : currentSessionId
                 })
             });
 
@@ -352,6 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error("Coach unavailable");
 
             const data = await response.json();
+
+            // If backend created a new session, update our local ID
+            if (data.session_id && data.session_id !== currentSessionId) {
+                console.log("DEBUG: Switching local session ID to DB ID:", data.session_id);
+                currentSessionId = data.session_id;
+            }
+
             const reply = data.reply || data.response || data.message || "I'm listening.";
             appendMessage(reply, 'ai');
 
@@ -387,7 +395,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch('/api/coach/title', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ history: chatHistory })
+                    body: JSON.stringify({
+                        history: chatHistory,
+                        session_id: currentSessionId
+                    })
                 });
 
                 if (res.ok) {

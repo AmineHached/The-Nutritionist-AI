@@ -39,4 +39,7 @@ def health_check():
     return {"status": "ok", "service": "The Nutritionist AI"}
 
 # Mount frontend
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+if os.path.exists("frontend"):
+    app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+else:
+    print("Startup: Warning - 'frontend' directory not found. Static files not mounted.")
