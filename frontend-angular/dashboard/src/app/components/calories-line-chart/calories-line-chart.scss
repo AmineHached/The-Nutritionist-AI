@@ -1,0 +1,16 @@
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+}
+
+canvas {
+  display: block;
+  height: 320px !important;
+}
+
+.chart-wrap {
+  height: 320px;
+}

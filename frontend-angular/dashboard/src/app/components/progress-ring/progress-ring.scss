@@ -1,0 +1,26 @@
+.progress-ring {
+  display: block;
+  width: 100%;
+  max-width: 140px;
+}
+.ring-svg { width: 100%; height: auto; display: block; }
+.ring-bg {
+  stroke: #F1F3F5; /* subtle background ring */
+  stroke-linecap: round;
+}
+.ring-progress {
+  stroke: #5B5F66; /* darker grey progress arc */
+  stroke-linecap: round;
+  transition: stroke-dashoffset 400ms cubic-bezier(.22,.9,.35,1);
+}
+.ring-text {
+  font-family: Inter, Poppins, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  font-weight: 500;
+  fill: var(--text, #0F172A);
+  dominant-baseline: middle;
+}
+
+@media (max-width: 480px) {
+  .progress-ring { max-width: 96px; }
+  .ring-text { font-size: 20px; }
+}

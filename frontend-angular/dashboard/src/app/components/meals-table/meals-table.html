@@ -1,0 +1,27 @@
+<table class="tbl">
+  <thead>
+    <tr>
+      <th>Food</th>
+      <th>Occur.</th>
+      <th>Calories</th>
+      <th>Carbs</th>
+      <th>Fat</th>
+      <th>Protein</th>
+      <th>Sodium</th>
+      <th>Sugar</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr *ngFor="let r of rows">
+      <td class="food">{{ r.food }}</td>
+      <td>{{ r.occurrences }}</td>
+      <td>{{ r.calories }}</td>
+      <td>{{ r.carbs }}</td>
+      <td>{{ r.fat }}</td>
+      <td>{{ r.protein }}</td>
+      <td>{{ r.sodium }}</td>
+      <td>{{ r.sugar }}</td>
+    </tr>
+  </tbody>
+</table>

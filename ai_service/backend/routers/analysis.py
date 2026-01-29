@@ -16,13 +16,13 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 @router.post("/analyze", response_model=AnalysisResponse)
-async def analyze_food(file: UploadFile = File(...)):
+async def analyze_food(file: UploadFile = File(...), user_email: str = "user@example.com"):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
     
     try:
         contents = await file.read()
-        result = await analyze_image(contents, media_type=file.content_type)
+        result = await analyze_image(contents, media_type=file.content_type, user_email=user_email)
         return result
     except Exception as e:
         import traceback
