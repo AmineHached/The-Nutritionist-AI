@@ -3,13 +3,13 @@
   <aside class="sidebar">
     <div class="brand">
       <div class="logo">T</div>
-      <div class="brand-name">TRAINERIZE</div>
+      <div class="brand-name">NUTRITIONIST</div>
     </div>
 
     <div class="profile card-profile">
-      <div class="avatar-initials">MA</div>
-      <div class="p-name">Meriam Ammari</div>
-      <div class="p-role small">Nutrition Coach</div>
+      <div class="avatar-initials">{{ getUserInitials() }}</div>
+      <div class="p-name">{{ getUserDisplayName() }}</div>
+      <div class="p-role small">Nutrition Tracker</div>
       <div class="profile-sep"></div>
     </div>
 
@@ -28,50 +28,74 @@
     <header class="topbar">
       <div class="title-block">
         <h1>Nutrition Centre</h1>
-          <p class="subtitle">Track calories, meals and trends.</p>
-          
+          <p class="subtitle">Suivi des calories, repas et tendances.</p>
       </div>
 
       <div class="actions">
         <button class="icon-btn">+</button>
         <button class="icon-btn">?</button>
         <div class="user-chip">
-          <div class="user-initials">MA</div>
-          <span>Meriam Ammari</span>
+          <div class="user-initials">{{ getUserInitials() }}</div>
+          <span>{{ getUserDisplayName() }}</span>
         </div>
       </div>
     </header>
+
+    <!-- ERROR BANNER -->
+    <div *ngIf="errors.length > 0" class="error-banner">
+      <div class="error-content">
+        <p>⚠️ Erreurs lors du chargement des données:</p>
+        <ul>
+          <li *ngFor="let error of errors">{{ error }}</li>
+        </ul>
+      </div>
+    </div>
 
     <!-- BANNER -->
     <div class="banner">
       <div class="badge">🔥</div>
       <div>
-        <div class="b-title">Welcome back</div>
-        <div class="b-sub">Overview of your nutrition and activity</div>
+        <div class="b-title">Bienvenue {{ getUserDisplayName() }}</div>
+        <div class="b-sub">Aperçu de votre nutrition et activité</div>
       </div>
-      <div class="motivation">✅ Great consistency</div>
+    </div>
+
+    <!-- NEW USER MESSAGE -->
+    <div *ngIf="!hasHistory && !isLoading" class="new-user-banner">
+      <div class="new-user-content">
+        <div class="welcome-emoji">🌈</div>
+        <div class="welcome-text">
+          <h2>{{ welcomeMessage }}</h2>
+          <p>Il semble que vous êtes nouveau ici! Commencez à enregistrer vos repas pour voir apparaître vos données nutritionnelles.</p>
+          <div class="cta-buttons">
+            <button class="btn-add-meal">📸 Ajouter une photo de mon repas</button>
+            <button class="btn-learn-more">En savoir plus</button>
+          </div>
+          <p class="meal-hint">💡 <strong>Astuce:</strong> Prenez une photo de votre repas et nous l'analyserons automatiquement pour extraire les informations nutritionnelles (calories, protéines, glucides, etc.)</p>
+        </div>
+      </div>
     </div>
 
     <!-- DASH GRID -->
-    <div class="dashboard-grid">
+    <div class="dashboard-grid" *ngIf="hasHistory && !isLoading">
       <!-- Row 1: Goal + Meals logged -->
       <section class="card goal">
-        <h3 class="card-title">Nutrition Goal</h3>
+        <h3 class="card-title">Objectif Nutrition</h3>
         <div class="goal-body">
           <div class="donut-placeholder">
             <app-progress-ring [percentage]="65" [size]="120"></app-progress-ring>
           </div>
           <div class="goal-stats">
             <div class="macro">
-              <div class="m-name">Protein</div>
-              <div class="m-value" style="color:var(--macro-protein)">112g</div>
+              <div class="m-name">Protéines</div>
+              <div class="m-value" style="color:var(--macro-protein)">{{ user?.poids || 0 }}g</div>
             </div>
             <div class="macro">
-              <div class="m-name">Carbs</div>
-              <div class="m-value" style="color:var(--macro-carbs)">198g</div>
+              <div class="m-name">Glucides</div>
+              <div class="m-value" style="color:var(--macro-carbs)">{{ user?.taille || 0 }}g</div>
             </div>
             <div class="macro">
-              <div class="m-name">Fat</div>
+              <div class="m-name">Gras</div>
               <div class="m-value" style="color:var(--macro-fat)">56g</div>
             </div>
           </div>
@@ -79,21 +103,21 @@
       </section>
 
       <section class="card meals-logged">
-        <h3 class="card-title">Meals logged this week</h3>
+        <h3 class="card-title">Repas enregistrés cette semaine</h3>
         <div class="meals-body">
           <div class="big-number">{{ caloriesByMeal.length || 0 }}</div>
-          <div class="small-note">meals logged</div>
+          <div class="small-note">repas enregistrés</div>
           <div class="mini-breakdown">
-            <div>Breakfast: 12</div>
-            <div>Lunch: 18</div>
-            <div>Dinner: 10</div>
+            <div>Petit-déj: 12</div>
+            <div>Déjeuner: 18</div>
+            <div>Dîner: 10</div>
           </div>
         </div>
       </section>
 
       <!-- Row 2: Weekly calories chart (wide) -->
       <section class="card weekly">
-        <h3 class="card-title">Weekly Calories</h3>
+        <h3 class="card-title">Calories Hebdomadaires</h3>
         <div class="chart-container chart-large">
           <app-calories-line-chart [daily]="daily" [goal]="2500"></app-calories-line-chart>
         </div>
@@ -101,21 +125,21 @@
 
       <!-- Row 3: three small charts -->
       <section class="card meal">
-        <h3 class="card-title">Calories per Meal</h3>
+        <h3 class="card-title">Calories par Repas</h3>
         <div class="chart-container chart-small">
           <app-calories-by-meal-chart [data]="caloriesByMeal"></app-calories-by-meal-chart>
         </div>
       </section>
 
       <section class="card score">
-        <h3 class="card-title">Calories per Food Score</h3>
+        <h3 class="card-title">Calories par Score Alimentaire</h3>
         <div class="chart-container chart-small">
           <app-food-score-chart [data]="caloriesByScore"></app-food-score-chart>
         </div>
       </section>
 
       <section class="card rel">
-        <h3 class="card-title">Meal Relationship</h3>
+        <h3 class="card-title">Relation des Repas</h3>
         <div class="chart-container chart-small">
           <app-meal-relationship-chart [data]="mealRelationship"></app-meal-relationship-chart>
         </div>
@@ -123,11 +147,25 @@
 
       <!-- Row 4: table -->
       <section class="card table">
-        <h3 class="card-title">Top 10 Most Consumed - Unhealthy Foods</h3>
+        <h3 class="card-title">Top 10 Aliments Malsains les Plus Consommés</h3>
         <div class="table-wrap">
           <app-meals-table [rows]="topUnhealthyFoods"></app-meals-table>
         </div>
       </section>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <h2>Chargement de vos données...</h2>
+        <p>Nous analysons vos habitudes alimentaires</p>
+        <div class="loading-steps">
+          <div class="step">📊 Récupération des données</div>
+          <div class="step">🔄 Calcul des statistiques</div>
+          <div class="step">📈 Préparation des graphiques</div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
