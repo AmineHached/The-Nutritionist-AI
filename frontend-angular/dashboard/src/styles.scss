@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
 }
@@ -13,6 +14,7 @@ app-root {
   display: block;
   min-height: 100%;
 }
+
 :root {
   --bg-page: #f5f7fb;
   --bg-card: #ffffff;
@@ -28,8 +30,9 @@ app-root {
   --text-muted: #6b7280;
   --grid: #e5e7eb;
 
-  --shadow: 0 8px 24px rgba(0,0,0,0.06);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
+
 /* Trainerize theme additions */
 :root {
   --sidebar-bg: #151515;
@@ -45,25 +48,61 @@ app-root {
   --premium-grey: #6B7280;
   --premium-grey-2: #374151;
 
-  --macro-protein: #23D160; /* updated green reference */
-  --macro-carbs: #1E63A8;   /* deeper blue for carbs */
-  --macro-fat: #C93B5F;     /* magenta/raspberry for fat */
+  --macro-protein: #23D160;
+  /* updated green reference */
+  --macro-carbs: #1E63A8;
+  /* deeper blue for carbs */
+  --macro-fat: #C93B5F;
+  /* magenta/raspberry for fat */
 
   --radius-lg: 18px;
   --radius-md: 12px;
+
+  /* Auth specific variables */
+  --primary-color: #2E7D32;
+  --primary-light: #4CAF50;
+  --primary-dark: #1B5E20;
+  --accent-color: #FF6B35;
+  --background-color: #F8F9FA;
+  --card-background: #FFFFFF;
+  --text-primary: #2C3E50;
+  --text-secondary: #6C757D;
+  --border-color: #E9ECEF;
+  --success-color: #28A745;
+  --error-color: #DC3545;
 }
+
 /* ====== GLOBAL TYPOGRAPHY (maquette) ====== */
-html, body {
+html,
+body {
   height: 100%;
   font-family: Inter, Poppins, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  font-size: 16px; /* base */
+  font-size: 16px;
+  /* base */
   background: #ffffff;
   color: #111827;
 }
 
 /* Larger, clearer heading scale for dashboard */
-h1 { font-size: 32px; font-weight: 700; margin: 0 0 12px; }
-h2 { font-size: 20px; font-weight: 700; margin: 0; }
-h3 { font-size: 18px; font-weight: 700; margin: 0; }
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
 
-.small { font-size: 13px; color: #6b7280; }
+h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.small {
+  font-size: 13px;
+  color: #6b7280;
+}

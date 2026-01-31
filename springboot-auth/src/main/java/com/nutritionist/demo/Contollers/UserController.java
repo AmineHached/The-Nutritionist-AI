@@ -38,7 +38,7 @@ public class UserController {
     public ResponseEntity<?> registerUser(@Valid @RequestBody User user) {
         try {
             User registeredUser = userService.register(user);
-            return ResponseEntity.ok("User registered successfully");
+            return ResponseEntity.ok(registeredUser);
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(409).body("Erreur: Email ou nom d'utilisateur déjà utilisé.");
         } catch (Exception e) {

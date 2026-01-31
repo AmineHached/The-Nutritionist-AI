@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL_ID = os.getenv("GROQ_MODEL_ID", "llama-3.2-90b-vision-preview")
+GROQ_MODEL_ID = os.getenv("GROQ_MODEL_ID", "llama-3.2-11b-vision-preview")
 SPRINGBOOT_API_URL = os.getenv("SPRINGBOOT_API_URL", "http://localhost:8080")
 
 SYSTEM_PROMPT = """
@@ -106,7 +106,7 @@ async def analyze_image(image_bytes: bytes, media_type: str = "image/jpeg", user
     else:
         msg = "LOG: Low Confidence. Using VISION Fallback."
         await manager.broadcast(msg)
-        current_model = "llama-3.2-90b-vision-preview"
+        current_model = "llama-3.2-11b-vision-preview"
         base64_image = base64.b64encode(processed_image_bytes).decode('utf-8')
         messages = [
             {
@@ -125,8 +125,25 @@ async def analyze_image(image_bytes: bytes, media_type: str = "image/jpeg", user
     payload = {"model": current_model, "messages": messages, "max_tokens": 1024, "temperature": 0.1}
     
     try:
-        await manager.broadcast("LOG: Sending request to Groq API...")
+        await manager.broadcast(f"LOG: Sending request to Groq API with model: {current_model}...")
         response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=60)
+        
+        # Debug: print full response if error
+        if response.status_code != 200:
+            print(f"Groq API Error {response.status_code}: {response.text}")
+            await manager.broadcast(f"LOG: Groq Error: {response.status_code}")
+            
+            # Fallback to text-only if vision fails
+            if current_model == "llama-3.2-11b-vision-preview":
+                await manager.broadcast("LOG: Vision failed, trying text-only fallback...")
+                fallback_model = "llama-3.3-70b-versatile"
+                fallback_messages = [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Analyze a typical meal photo. Provide general nutritional breakdown for a balanced meal in JSON format."}
+                ]
+                fallback_payload = {"model": fallback_model, "messages": fallback_messages, "max_tokens": 1024, "temperature": 0.1}
+                response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=fallback_payload, timeout=60)
+        
         response.raise_for_status()
         
         content = response.json()['choices'][0]['message']['content']
@@ -157,3 +174,4 @@ async def analyze_image(image_bytes: bytes, media_type: str = "image/jpeg", user
     except Exception as e:
         print(f"Vision service error: {e}")
         raise e
+

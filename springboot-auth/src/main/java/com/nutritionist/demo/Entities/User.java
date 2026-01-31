@@ -41,6 +41,7 @@ public class User implements UserDetails {
     @NotBlank(message = "Username is required")
     @Column(unique = true, nullable = false, length = 50)
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @JsonProperty("username")
     private String username;
 
 
@@ -79,26 +80,31 @@ public class User implements UserDetails {
     }
 
     @Override
+    @JsonIgnore
     public String getUsername() {
         return this.email;
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonExpired() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonLocked() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isEnabled() {
         return true;
     }

@@ -1,0 +1,152 @@
+.meals-page {
+    padding: 24px;
+    animation: fadeIn 0.4s ease-out;
+
+    .page-header {
+        margin-bottom: 32px;
+
+        h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text);
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin-top: 8px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+    }
+
+    .meals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .action-card {
+        background: var(--card);
+        border-radius: 24px;
+        padding: 32px;
+        text-align: center;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid var(--border);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+
+        &:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-strong);
+        }
+
+        .card-icon {
+            font-size: 56px;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        p {
+            color: var(--muted);
+            font-size: 15px;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        button {
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            border: none;
+            transition: transform 0.2s, background-color 0.2s;
+
+            &:active {
+                transform: scale(0.98);
+            }
+        }
+
+        &.photo-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+
+            p {
+                color: rgba(255, 255, 255, 0.95);
+            }
+
+            .btn-primary {
+                background: white;
+                color: #4facfe;
+
+                &:hover {
+                    background: #f8f9fa;
+                }
+            }
+        }
+
+        &.manual-card {
+            .btn-secondary {
+                background: var(--bg);
+                color: var(--text);
+                border: 1px solid var(--border);
+
+                &:hover {
+                    background: #e5e7eb;
+                }
+            }
+        }
+    }
+
+    .history-card {
+        grid-column: 1 / -1;
+        background: var(--card);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid var(--border);
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .empty-state {
+            padding: 60px 40px;
+            text-align: center;
+            color: var(--muted);
+            background: #f9fafb;
+            border-radius: 16px;
+            border: 2px dashed #e5e7eb;
+
+            p {
+                font-size: 16px;
+                font-weight: 500;
+            }
+        }
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

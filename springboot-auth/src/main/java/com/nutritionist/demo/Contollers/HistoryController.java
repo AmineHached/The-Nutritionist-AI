@@ -45,6 +45,17 @@ public class HistoryController {
         return ResponseEntity.ok(histories);
     }
 
+    // Alternative: get history by email as query param (to avoid @ in path)
+    @GetMapping("/by-email")
+    public ResponseEntity<List<History>> getHistoryByEmail(@RequestParam String email) {
+        Optional<User> user = userService.findByEmail(email);
+        if (user.isEmpty()) {
+            return ResponseEntity.ok(java.util.Collections.emptyList());
+        }
+        List<History> histories = historyService.getHistoryByUser(user.get());
+        return ResponseEntity.ok(histories);
+    }
+
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteHistory(@PathVariable Long id) {

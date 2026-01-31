@@ -8,6 +8,10 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -15,6 +19,7 @@ import com.nutritionist.demo.Entities.User;
 import com.nutritionist.demo.Entities.History;
 import com.nutritionist.demo.Repositories.UserRepository;
 import com.nutritionist.demo.Repositories.HistoryRepository;
+import com.nutritionist.demo.dto.DashboardData;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -27,81 +32,12 @@ public class DashboardController {
     @Autowired
     private HistoryRepository historyRepository;
 
-    // Type pour les données de calories par jour
-    public static class DayCalories {
-        public String date;
-        public int calories;
-
-        public DayCalories(String date, int calories) {
-            this.date = date;
-            this.calories = calories;
-        }
-    }
-
-    // Type pour les calories par repas
-    public static class CaloriesByMeal {
-        public String meal;
-        public int calories;
-
-        public CaloriesByMeal(String meal, int calories) {
-            this.meal = meal;
-            this.calories = calories;
-        }
-    }
-
-    // Type pour les calories par score
-    public static class CaloriesByScore {
-        public String score;
-        public int calories;
-
-        public CaloriesByScore(String score, int calories) {
-            this.score = score;
-            this.calories = calories;
-        }
-    }
-
-    // Type pour les aliments malsains
-    public static class UnhealthyFoodRow {
-        public String food;
-        public int occurrences;
-        public int calories;
-        public int carbs;
-        public int fat;
-        public int protein;
-        public int sodium;
-        public int sugar;
-
-        public UnhealthyFoodRow(String food, int occurrences, int calories, int carbs, int fat, int protein, int sodium, int sugar) {
-            this.food = food;
-            this.occurrences = occurrences;
-            this.calories = calories;
-            this.carbs = carbs;
-            this.fat = fat;
-            this.protein = protein;
-            this.sodium = sodium;
-            this.sugar = sugar;
-        }
-    }
-
-    // Type pour la relation entre repas
-    public static class MealRelationshipPoint {
-        public String meal;
-        public int calories;
-        public int carbs;
-
-        public MealRelationshipPoint(String meal, int calories, int carbs) {
-            this.meal = meal;
-            this.calories = calories;
-            this.carbs = carbs;
-        }
-    }
-
     /**
      * Retourne les calories quotidiennes de la semaine passée pour un utilisateur
      * @param email L'email de l'utilisateur
      */
-    @GetMapping("/daily-calories/{email}")
-    public List<DayCalories> getDailyCalories(@PathVariable String email) {
+    @GetMapping("/daily-calories")
+    public List<DashboardData.DayCalories> getDailyCalories(@RequestParam String email) {
         Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) return Collections.emptyList();
 
@@ -125,7 +61,7 @@ public class DashboardController {
         }
 
         return map.entrySet().stream()
-                .map(e -> new DayCalories(e.getKey().toString(), e.getValue()))
+                .map(e -> new DashboardData.DayCalories(e.getKey().toString(), e.getValue()))
                 .collect(Collectors.toList());
     }
 
@@ -133,8 +69,8 @@ public class DashboardController {
      * Retourne les calories par type de repas pour un utilisateur
      * @param email L'email de l'utilisateur
      */
-    @GetMapping("/calories-by-meal/{email}")
-    public List<CaloriesByMeal> getCaloriesByMeal(@PathVariable String email) {
+    @GetMapping("/calories-by-meal")
+    public List<DashboardData.CaloriesByMeal> getCaloriesByMeal(@RequestParam String email) {
         Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) return Collections.emptyList();
         User user = optUser.get();
@@ -147,7 +83,7 @@ public class DashboardController {
             byMeal.put(meal, byMeal.getOrDefault(meal, 0) + cal);
         }
         return byMeal.entrySet().stream()
-                .map(e -> new CaloriesByMeal(e.getKey(), e.getValue()))
+                .map(e -> new DashboardData.CaloriesByMeal(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
     }
 
@@ -155,8 +91,8 @@ public class DashboardController {
      * Retourne les calories par score alimentaire pour un utilisateur
      * @param email L'email de l'utilisateur
      */
-    @GetMapping("/calories-by-score/{email}")
-    public List<CaloriesByScore> getCaloriesByScore(@PathVariable String email) {
+    @GetMapping("/calories-by-score")
+    public List<DashboardData.CaloriesByScore> getCaloriesByScore(@RequestParam String email) {
         Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) return Collections.emptyList();
         User user = optUser.get();
@@ -169,10 +105,10 @@ public class DashboardController {
             else if (cal >= 400) neutral += cal;
             else healthy += cal;
         }
-        List<CaloriesByScore> out = new ArrayList<>();
-        out.add(new CaloriesByScore("Unhealthy", unhealthy));
-        out.add(new CaloriesByScore("Neutral", neutral));
-        out.add(new CaloriesByScore("Healthy", healthy));
+        List<DashboardData.CaloriesByScore> out = new ArrayList<>();
+        out.add(new DashboardData.CaloriesByScore("Unhealthy", unhealthy));
+        out.add(new DashboardData.CaloriesByScore("Neutral", neutral));
+        out.add(new DashboardData.CaloriesByScore("Healthy", healthy));
         return out;
     }
 
@@ -180,8 +116,8 @@ public class DashboardController {
      * Retourne les aliments malsains les plus consommés pour un utilisateur
      * @param email L'email de l'utilisateur
      */
-    @GetMapping("/top-unhealthy-foods/{email}")
-    public List<UnhealthyFoodRow> getTopUnhealthyFoods(@PathVariable String email) {
+    @GetMapping("/top-unhealthy-foods")
+    public List<DashboardData.UnhealthyFoodRow> getTopUnhealthyFoods(@RequestParam String email) {
         Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) return Collections.emptyList();
         User user = optUser.get();
@@ -205,7 +141,7 @@ public class DashboardController {
         return occurrences.entrySet().stream()
                 .sorted((a,b) -> Integer.compare(b.getValue(), a.getValue()))
                 .limit(10)
-                .map(e -> new UnhealthyFoodRow(
+                .map(e -> new DashboardData.UnhealthyFoodRow(
                         e.getKey(),
                         e.getValue(),
                         caloriesSum.getOrDefault(e.getKey(),0),
@@ -217,8 +153,8 @@ public class DashboardController {
      * Retourne la relation entre repas (calories et glucides) pour un utilisateur
      * @param email L'email de l'utilisateur
      */
-    @GetMapping("/meal-relationship/{email}")
-    public List<MealRelationshipPoint> getMealRelationship(@PathVariable String email) {
+    @GetMapping("/meal-relationship")
+    public List<DashboardData.MealRelationshipPoint> getMealRelationship(@RequestParam String email) {
         Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) return Collections.emptyList();
         User user = optUser.get();
@@ -235,8 +171,41 @@ public class DashboardController {
             map.put(meal, arr);
         }
         return map.entrySet().stream()
-                .map(e -> new MealRelationshipPoint(e.getKey(), e.getValue()[0], e.getValue()[1]))
+                .map(e -> new DashboardData.MealRelationshipPoint(e.getKey(), e.getValue()[0], e.getValue()[1]))
                 .collect(Collectors.toList());
+    }
+
+    @Autowired
+    private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    @GetMapping(value = "/all", produces = "application/json")
+    public String getFullDashboardData(@RequestParam("email") String email) {
+        System.out.println("DEBUG: Fetching full dashboard data for: " + email);
+        try {
+            Map<String, Object> data = new HashMap<>();
+            data.put("daily", getDailyCalories(email));
+            data.put("caloriesByMeal", getCaloriesByMeal(email));
+            data.put("caloriesByScore", getCaloriesByScore(email));
+            data.put("topUnhealthyFoods", getTopUnhealthyFoods(email));
+            data.put("mealRelationship", getMealRelationship(email));
+            
+            String json = objectMapper.writeValueAsString(data);
+            System.out.println("DEBUG: JSON generated, length: " + json.length());
+            return json;
+        } catch (Exception e) {
+            System.err.println("DEBUG ERROR in getFullDashboardData: " + e.getMessage());
+            e.printStackTrace();
+            return "{\"error\": \"" + e.getMessage() + "\"}";
+        }
+    }
+
+    @GetMapping("/test-json")
+    public Map<String, Object> testJson() {
+        Map<String, Object> res = new HashMap<>();
+        res.put("status", "ok");
+        res.put("message", "JSON is working");
+        res.put("data", Arrays.asList(1, 2, 3));
+        return res;
     }
 
     /**

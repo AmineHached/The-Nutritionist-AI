@@ -1,26 +1,7 @@
 <div class="app-shell">
   <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="logo">T</div>
-      <div class="brand-name">NUTRITIONIST</div>
-    </div>
-
-    <div class="profile card-profile">
-      <div class="avatar-initials">{{ getUserInitials() }}</div>
-      <div class="p-name">{{ getUserDisplayName() }}</div>
-      <div class="p-role small">Nutrition Tracker</div>
-      <div class="profile-sep"></div>
-    </div>
-
-    <nav class="nav">
-      <a class="nav-item active">Dashboard</a>
-      <a class="nav-item">Meals</a>
-      <a class="nav-item">Profile</a>
-      <a class="nav-item">Progress</a>
-      <a class="nav-item">Goals</a>
-    </nav>
-  </aside>
+  <!-- SIDEBAR -->
+  <app-sidebar [username]="routeUsername"></app-sidebar>
 
   <!-- MAIN -->
   <main class="main">
@@ -28,11 +9,11 @@
     <header class="topbar">
       <div class="title-block">
         <h1>Nutrition Centre</h1>
-          <p class="subtitle">Suivi des calories, repas et tendances.</p>
+        <p class="subtitle">Suivi des calories, repas et tendances.</p>
       </div>
 
       <div class="actions">
-        <button class="icon-btn">+</button>
+        <button class="icon-btn" [routerLink]="['/meals', routeUsername]">+</button>
         <button class="icon-btn">?</button>
         <div class="user-chip">
           <div class="user-initials">{{ getUserInitials() }}</div>
@@ -66,12 +47,15 @@
         <div class="welcome-emoji">🌈</div>
         <div class="welcome-text">
           <h2>{{ welcomeMessage }}</h2>
-          <p>Il semble que vous êtes nouveau ici! Commencez à enregistrer vos repas pour voir apparaître vos données nutritionnelles.</p>
+          <p>Il semble que vous êtes nouveau ici! Commencez à enregistrer vos repas pour voir apparaître vos données
+            nutritionnelles.</p>
           <div class="cta-buttons">
-            <button class="btn-add-meal">📸 Ajouter une photo de mon repas</button>
+            <button class="btn-add-meal" [routerLink]="['/meals', routeUsername]">📸 Ajouter une photo de mon
+              repas</button>
             <button class="btn-learn-more">En savoir plus</button>
           </div>
-          <p class="meal-hint">💡 <strong>Astuce:</strong> Prenez une photo de votre repas et nous l'analyserons automatiquement pour extraire les informations nutritionnelles (calories, protéines, glucides, etc.)</p>
+          <p class="meal-hint">💡 <strong>Astuce:</strong> Prenez une photo de votre repas et nous l'analyserons
+            automatiquement pour extraire les informations nutritionnelles (calories, protéines, glucides, etc.)</p>
         </div>
       </div>
     </div>

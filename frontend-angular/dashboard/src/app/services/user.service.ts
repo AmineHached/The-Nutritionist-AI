@@ -16,17 +16,17 @@ export type UserData = {
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-  private apiUrl = 'http://localhost:8080/api';
+  private apiUrl = '/api';
 
   constructor(
     private http: HttpClient,
     @Inject(PLATFORM_ID) private platformId: Object
-  ) {}
+  ) { }
 
   // Récupère les données utilisateur depuis le localStorage
   getUserFromStorage(): UserData | null {
     // SSR check: localStorage is only available in browser
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isPlatformBrowser(this.platformId) || typeof localStorage === 'undefined' || !localStorage.getItem) {
       return null;
     }
 
@@ -45,7 +45,7 @@ export class UserService {
     if (username) {
       return {
         username: username,
-        email: localStorage.getItem('userEmail') || '',
+        email: (localStorage.getItem('userEmail') || '').split(':')[0],
         poids: 0,
         taille: 0,
         age: 0
@@ -58,7 +58,7 @@ export class UserService {
   // Récupère l'email utilisateur depuis le localStorage
   getUserEmail(): string | null {
     // SSR check: localStorage is only available in browser
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isPlatformBrowser(this.platformId) || typeof localStorage === 'undefined' || !localStorage.getItem) {
       return null;
     }
     return localStorage.getItem('userEmail');

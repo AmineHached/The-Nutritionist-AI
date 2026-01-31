@@ -1,1 +1,124 @@
-<p>meals works!</p>
+<div class="meals-page">
+    <header class="page-header">
+        <h1>Mes Repas</h1>
+        <p class="subtitle">Enregistrez et analysez votre nutrition quotidienne.</p>
+    </header>
+
+    <div class="meals-grid">
+        <!-- Camera/Photo Action Card -->
+        <section class="action-card photo-card">
+            <div class="card-icon">📸</div>
+            <h2>Prendre une photo</h2>
+            <p>Pointez l'appareil vers votre assiette pour une analyse instantanée.</p>
+            <button class="btn-primary" (click)="triggerCamera()">Capturer maintenant</button>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;"
+                (change)="onFileSelected($event)">
+        </section>
+
+        <!-- Manual Entry Card -->
+        <section class="action-card manual-card">
+            <div class="card-icon">📝</div>
+            <h2>Saisie manuelle</h2>
+            <p>Entrez les détails de votre repas si vous n'avez pas de photo.</p>
+            <button class="btn-secondary" (click)="addManualEntry()">Ajouter manuellement</button>
+        </section>
+
+        <!-- Preview Section -->
+        <section class="history-card" *ngIf="previewUrl">
+            <h2>{{ analysisResult ? 'Analyse Nutritionnelle' : 'Analyse en cours...' }}</h2>
+            <div class="preview-container" style="text-align: center;">
+                <img [src]="previewUrl"
+                    style="max-width: 100%; border-radius: 12px; max-height: 200px; margin-bottom: 20px;">
+
+                <div *ngIf="isAnalyzing" class="analyzing-state">
+                    <p style="font-weight: 600; color: var(--primary);">🔍 Analyse de l'image par IA...</p>
+                </div>
+
+                <div *ngIf="error" class="error-msg" style="color: red; padding: 10px;">
+                    {{ error }}
+                </div>
+
+                <div *ngIf="analysisResult && !isAnalyzing" class="result-card"
+                    style="text-align: left; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 12px;">
+                    <!-- Health Score -->
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span style="font-size: 3rem;">{{ analysisResult.health_score >= 70 ? '🌟' :
+                            analysisResult.health_score >= 40 ? '⚠️' : '🔴' }}</span>
+                        <h3 style="margin: 10px 0;">Score Santé: {{ analysisResult.health_score }}/100</h3>
+                        <p style="color: #666;">{{ analysisResult.health_summary }}</p>
+                    </div>
+
+                    <!-- Food Items -->
+                    <h4 style="margin-bottom: 10px;">🍽️ Aliments détectés:</h4>
+                    <div *ngFor="let item of analysisResult.food_items"
+                        style="background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <strong>{{ item.name }}</strong> <span style="color: #888;">({{ item.portion_desc }})</span>
+                        <div style="display: flex; gap: 10px; margin-top: 5px; font-size: 0.9em;">
+                            <span>🔥 {{ item.nutrition.calories_kcal }} kcal</span>
+                            <span>🥩 {{ item.nutrition.protein_g }}g</span>
+                            <span>🍞 {{ item.nutrition.carbs_g }}g</span>
+                            <span>🥑 {{ item.nutrition.fat_g }}g</span>
+                        </div>
+                    </div>
+
+                    <!-- Total Nutrition -->
+                    <div
+                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 12px; margin-top: 15px;">
+                        <h4 style="margin-bottom: 10px;">📊 Total Nutritionnel</h4>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center;">
+                            <div><strong>{{ analysisResult.total_nutrition.calories_kcal
+                                    }}</strong><br><small>Calories</small></div>
+                            <div><strong>{{ analysisResult.total_nutrition.protein_g
+                                    }}g</strong><br><small>Protéines</small></div>
+                            <div><strong>{{ analysisResult.total_nutrition.carbs_g
+                                    }}g</strong><br><small>Glucides</small></div>
+                            <div><strong>{{ analysisResult.total_nutrition.fat_g }}g</strong><br><small>Lipides</small>
+                            </div>
+                            <div><strong>{{ analysisResult.total_nutrition.fiber_g }}g</strong><br><small>Fibres</small>
+                            </div>
+                            <div><strong>{{ analysisResult.total_nutrition.sugar_g }}g</strong><br><small>Sucres</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div *ngIf="analysisResult.recommendations?.length" style="margin-top: 15px;">
+                        <h4>💡 Recommandations:</h4>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li *ngFor="let rec of analysisResult.recommendations">{{ rec }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent History -->
+        <section class="history-card">
+            <h2>📋 Historique récent</h2>
+            <div *ngIf="history.length === 0" class="empty-state">
+                <p>Aucun repas enregistré. Prenez une photo pour commencer!</p>
+            </div>
+            <div *ngFor="let item of history"
+                style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="font-size: 1.1em;">{{ item.foodItems || 'Repas analysé' }}</strong>
+                        <p style="color: #888; margin: 5px 0; font-size: 0.9em;">{{ item.createdAt | date:'dd/MM/yyyy
+                            HH:mm' }}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.3em; font-weight: bold; color: var(--primary);">🔥 {{ item.calories |
+                            number:'1.0-0' }}</span>
+                        <p style="color: #888; margin: 0; font-size: 0.8em;">kcal</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 10px; font-size: 0.85em; color: #666;">
+                    <span>🥩 {{ item.protein | number:'1.0-0' }}g prot</span>
+                    <span>🍞 {{ item.carbs | number:'1.0-0' }}g glucides</span>
+                    <span>🥑 {{ item.fat | number:'1.0-0' }}g lipides</span>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

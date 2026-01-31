@@ -29,11 +29,19 @@ export type MealRelationshipPoint = {
   carbs: number;
 };
 
+export type FullDashboardData = {
+  daily: DayCalories[];
+  caloriesByMeal: CaloriesByMeal[];
+  caloriesByScore: CaloriesByScore[];
+  topUnhealthyFoods: UnhealthyFoodRow[];
+  mealRelationship: MealRelationshipPoint[];
+};
+
 @Injectable({ providedIn: 'root' })
 export class DashboardDataService {
-  private apiUrl = 'http://localhost:8080/api';
+  private apiUrl = '/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getDailyCalories(email: string): Observable<DayCalories[]> {
     return this.http
@@ -62,6 +70,12 @@ export class DashboardDataService {
   getMealRelationship(email: string): Observable<MealRelationshipPoint[]> {
     return this.http
       .get<MealRelationshipPoint[]>(`${this.apiUrl}/dashboard/meal-relationship/${email}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getFullDashboardData(email: string): Observable<FullDashboardData> {
+    return this.http
+      .get<FullDashboardData>(`${this.apiUrl}/dashboard/all`, { params: { email } })
       .pipe(catchError(this.handleError));
   }
 

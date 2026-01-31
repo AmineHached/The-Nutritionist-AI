@@ -2,14 +2,14 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService, LoginPayload } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="auth-container">
       <div class="auth-header">
@@ -18,10 +18,10 @@ import { takeUntil } from 'rxjs/operators';
         <p>Connectez-vous à votre compte</p>
       </div>
 
-      <div *ngIf="errorMessage" class="message error" [@.trigger]="'enter'">
+      <div *ngIf="errorMessage && errorMessage.trim()" class="message error">
         {{ errorMessage }}
       </div>
-      <div *ngIf="successMessage" class="message success" [@.trigger]="'enter'">
+      <div *ngIf="successMessage && successMessage.trim()" class="message success">
         {{ successMessage }}
       </div>
 
@@ -32,7 +32,6 @@ import { takeUntil } from 'rxjs/operators';
             type="email"
             formControlName="email"
             placeholder="votre@email.com"
-            [disabled]="isLoading"
           />
           <div
             *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
@@ -48,7 +47,6 @@ import { takeUntil } from 'rxjs/operators';
             type="password"
             formControlName="password"
             placeholder="••••••••"
-            [disabled]="isLoading"
           />
           <div
             *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
@@ -71,7 +69,7 @@ import { takeUntil } from 'rxjs/operators';
 
       <div class="auth-links">
         <p>Pas encore de compte ?</p>
-        <a href="/register" class="btn-secondary">S'inscrire</a>
+        <a routerLink="/register" class="btn-secondary">S'inscrire</a>
       </div>
     </div>
   `,
@@ -88,7 +86,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.initializeForm();
@@ -115,6 +113,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
+    this.loginForm.disable();
 
     const payload: LoginPayload = {
       email: this.loginForm.get('email')?.value,
@@ -132,6 +131,7 @@ export class LoginComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isLoading = false;
+          this.loginForm.enable();
           this.errorMessage = error.message || 'Erreur de connexion';
         },
         complete: () => {

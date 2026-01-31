@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { PLATFORM_ID, Inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 export interface User {
   id?: number;
@@ -32,15 +34,19 @@ export interface RegisterPayload {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8080/api/users';
-  private currentUserSubject = new BehaviorSubject<User | null>(this.getUserFromStorage());
+  private apiUrl = '/api/users';
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
     this.initializeUser();
   }
 
   private initializeUser(): void {
+    if (!isPlatformBrowser(this.platformId) || typeof localStorage === 'undefined' || !localStorage.getItem) return;
     const userData = localStorage.getItem('userData');
     if (userData) {
       try {
@@ -58,7 +64,14 @@ export class AuthService {
         this.setUserData(user);
       }),
       catchError(error => {
-        const errorMessage = error.error?.message || error.statusText || 'Erreur de connexion';
+        let errorMessage = 'Erreur de connexion';
+        if (typeof error.error === 'string' && error.error.trim()) {
+          errorMessage = error.error;
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error.statusText) {
+          errorMessage = error.statusText;
+        }
         return throwError(() => new Error(errorMessage));
       })
     );
@@ -70,16 +83,31 @@ export class AuthService {
         this.setUserData(user);
       }),
       catchError(error => {
-        const errorMessage = error.error?.message || error.statusText || 'Erreur d\'inscription';
+        let errorMessage = 'Erreur d\'inscription';
+        if (typeof error.error === 'string' && error.error.trim()) {
+          errorMessage = error.error;
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error.statusText) {
+          errorMessage = error.statusText;
+        }
+
+        // Handle 409 Conflict specifically for better UX
+        if (error.status === 409 && (!errorMessage || errorMessage === 'Conflict')) {
+          errorMessage = 'Cet email ou nom d\'utilisateur est déjà utilisé.';
+        }
+
         return throwError(() => new Error(errorMessage));
       })
     );
   }
 
   logout(): void {
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('username');
-    localStorage.removeItem('userData');
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('username');
+      localStorage.removeItem('userData');
+    }
     this.currentUserSubject.next(null);
   }
 
@@ -92,6 +120,7 @@ export class AuthService {
   }
 
   private getUserFromStorage(): User | null {
+    if (!isPlatformBrowser(this.platformId) || typeof localStorage === 'undefined' || !localStorage.getItem) return null;
     const userData = localStorage.getItem('userData');
     if (userData) {
       try {
@@ -104,9 +133,11 @@ export class AuthService {
   }
 
   private setUserData(user: User): void {
-    localStorage.setItem('userEmail', user.email);
-    localStorage.setItem('username', user.username);
-    localStorage.setItem('userData', JSON.stringify(user));
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('userEmail', user.email);
+      localStorage.setItem('username', user.username);
+      localStorage.setItem('userData', JSON.stringify(user));
+    }
     this.currentUserSubject.next(user);
   }
 }

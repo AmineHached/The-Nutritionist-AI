@@ -8,7 +8,7 @@ export class AuthGuard implements CanActivate {
   constructor(
     private router: Router,
     private injector: Injector
-  ) {}
+  ) { }
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     // Vérifier si on est dans le navigateur (pas côté serveur)
@@ -17,6 +17,10 @@ export class AuthGuard implements CanActivate {
     }
 
     // Vérifier si l'utilisateur est connecté (données en localStorage)
+    if (typeof localStorage === 'undefined' || !localStorage.getItem) {
+      this.router.navigate(['/login']);
+      return false;
+    }
     const userEmail = localStorage.getItem('userEmail');
     const userData = localStorage.getItem('userData');
 
@@ -32,7 +36,7 @@ export class AuthGuard implements CanActivate {
     }
 
     // L'utilisateur n'est pas authentifié - rediriger vers la page de connexion
-    window.location.href = 'http://localhost:3000';
+    this.router.navigate(['/login']);
     return false;
   }
 }

@@ -1,0 +1,47 @@
+<div class="app-shell">
+    <app-sidebar [username]="username"></app-sidebar>
+
+    <main class="main">
+        <div class="chat-wrapper">
+            <header class="chat-header">
+                <h1>Coach Nutrition IA</h1>
+                <p>Votre assistant personnel pour atteindre vos objectifs.</p>
+                <div class="status-badge">En ligne 🟢</div>
+            </header>
+
+            <div class="chat-container">
+                <div class="messages" #scrollContainer>
+                    <div *ngFor="let msg of messages" class="message" [ngClass]="msg.role">
+                        <div class="avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
+                        <div class="bubble">
+                            <p *ngIf="msg.role === 'user'">{{ msg.content }}</p>
+                            <div *ngIf="msg.role === 'assistant'" [innerHTML]="msg.content"></div>
+                        </div>
+                    </div>
+
+                    <div *ngIf="isLoading" class="message assistant">
+                        <div class="avatar">🤖</div>
+                        <div class="bubble typing">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </div>
+
+                    <div *ngIf="error" class="error-banner">
+                        {{ error }}
+                    </div>
+                </div>
+
+                <div class="input-area">
+                    <input [(ngModel)]="inputMessage" (keyup.enter)="sendMessage()"
+                        placeholder="Posez une question sur votre repas, vos calories..." [disabled]="isLoading">
+                    <button (click)="sendMessage()" [disabled]="!inputMessage.trim() || isLoading">
+                        <span *ngIf="!isLoading">Envoyer ➤</span>
+                        <span *ngIf="isLoading">...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>

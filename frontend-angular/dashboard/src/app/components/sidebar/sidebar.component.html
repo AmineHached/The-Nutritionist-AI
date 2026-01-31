@@ -1,0 +1,28 @@
+<aside class="sidebar">
+    <div class="brand">
+        <div class="logo">T</div>
+        <div class="brand-name">NUTRITIONIST</div>
+    </div>
+
+    <div class="profile card-profile">
+        <div class="avatar-initials">{{ getUserInitials() }}</div>
+        <div class="p-name">{{ getUserDisplayName() }}</div>
+        <div class="p-role small">Nutrition Tracker</div>
+        <div class="profile-sep"></div>
+    </div>
+
+    <nav class="nav">
+        <a class="nav-item" [routerLink]="['/dashboard', username]" routerLinkActive="active">
+            <span class="icon">📊</span> Dashboard
+        </a>
+        <a class="nav-item" [routerLink]="['/meals', username]" routerLinkActive="active">
+            <span class="icon">🍽️</span> Meals
+        </a>
+        <a class="nav-item" [routerLink]="['/coach', username]" routerLinkActive="active">
+            <span class="icon">🤖</span> AI Coach
+        </a>
+        <a class="nav-item" [routerLink]="['/profile', username]" routerLinkActive="active">
+            <span class="icon">👤</span> Profile
+        </a>
+    </nav>
+</aside>

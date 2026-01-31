@@ -7,7 +7,7 @@ from backend.vision.inference import vision_service as local_vision
 
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL_ID = os.getenv("GROQ_MODEL_ID", "llama-3.2-90b-vision-preview") # Updated to a vision capable model if needed, otherwise user default
+GROQ_MODEL_ID = os.getenv("GROQ_MODEL_ID", "llama-3.2-11b-vision-preview") 
 
 SYSTEM_PROMPT = """
 You are an expert nutritionist and computer vision AI. 
@@ -156,7 +156,7 @@ async def analyze_image(image_bytes: bytes, media_type: str = "image/jpeg") -> A
         msg = "LOG: Low Confidence. Using VISION Fallback (Model: Llama 4 Maverick)."
         print(msg)
         await manager.broadcast(msg)
-        groq_model = "meta-llama/llama-4-maverick-17b-128e-instruct" 
+        groq_model = "llama-3.2-11b-vision-preview" 
         
         base64_image = base64.b64encode(processed_image_bytes).decode('utf-8')
         

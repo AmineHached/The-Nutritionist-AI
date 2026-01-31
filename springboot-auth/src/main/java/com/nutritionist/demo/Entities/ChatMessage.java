@@ -16,7 +16,7 @@ public class ChatMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 2000)
+    @Column(columnDefinition = "CLOB")
     private String content;
 
     private String role; // "user" or "assistant"

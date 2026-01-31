@@ -2,14 +2,14 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService, RegisterPayload } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="auth-container">
       <div class="auth-header">
@@ -18,10 +18,10 @@ import { takeUntil } from 'rxjs/operators';
         <p>Rejoignez notre communauté nutrition</p>
       </div>
 
-      <div *ngIf="errorMessage" class="message error" [@.trigger]="'enter'">
+      <div *ngIf="errorMessage && errorMessage.trim()" class="message error">
         {{ errorMessage }}
       </div>
-      <div *ngIf="successMessage" class="message success" [@.trigger]="'enter'">
+      <div *ngIf="successMessage && successMessage.trim()" class="message success">
         {{ successMessage }}
       </div>
 
@@ -32,7 +32,6 @@ import { takeUntil } from 'rxjs/operators';
             type="text"
             formControlName="username"
             placeholder="Votre nom"
-            [disabled]="isLoading"
           />
           <div
             *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched"
@@ -48,7 +47,6 @@ import { takeUntil } from 'rxjs/operators';
             type="email"
             formControlName="email"
             placeholder="votre@email.com"
-            [disabled]="isLoading"
           />
           <div
             *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
@@ -64,7 +62,6 @@ import { takeUntil } from 'rxjs/operators';
             type="password"
             formControlName="password"
             placeholder="••••••••"
-            [disabled]="isLoading"
           />
           <div
             *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
@@ -83,7 +80,6 @@ import { takeUntil } from 'rxjs/operators';
             step="0.1"
             min="30"
             max="300"
-            [disabled]="isLoading"
           />
           <div
             *ngIf="registerForm.get('poids')?.invalid && registerForm.get('poids')?.touched"
@@ -101,7 +97,6 @@ import { takeUntil } from 'rxjs/operators';
             placeholder="175"
             min="100"
             max="250"
-            [disabled]="isLoading"
           />
           <div
             *ngIf="registerForm.get('taille')?.invalid && registerForm.get('taille')?.touched"
@@ -119,7 +114,6 @@ import { takeUntil } from 'rxjs/operators';
             placeholder="25"
             min="13"
             max="120"
-            [disabled]="isLoading"
           />
           <div
             *ngIf="registerForm.get('age')?.invalid && registerForm.get('age')?.touched"
@@ -135,14 +129,14 @@ import { takeUntil } from 'rxjs/operators';
           [disabled]="registerForm.invalid || isLoading"
         >
           <span class="btn-text">
-            {{ isLoading ? 'Inscription en cours...' : 'S\'inscrire' }}
+            {{ isLoading ? 'Inscription en cours...' : "S'inscrire" }}
           </span>
         </button>
       </form>
 
       <div class="auth-links">
         <p>Déjà inscrit ?</p>
-        <a href="/login" class="btn-secondary">Se connecter</a>
+        <a routerLink="/login" class="btn-secondary">Se connecter</a>
       </div>
     </div>
   `,
@@ -159,7 +153,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.initializeForm();
@@ -211,6 +205,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
+    this.registerForm.disable();
 
     const payload: RegisterPayload = {
       username: this.registerForm.get('username')?.value,
@@ -232,6 +227,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isLoading = false;
+          this.registerForm.enable();
           this.errorMessage = error.message || 'Erreur d\'inscription';
         },
         complete: () => {
