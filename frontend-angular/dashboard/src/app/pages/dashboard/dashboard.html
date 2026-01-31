@@ -1,0 +1,133 @@
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">T</div>
+      <div class="brand-name">TRAINERIZE</div>
+    </div>
+
+    <div class="profile card-profile">
+      <div class="avatar-initials">MA</div>
+      <div class="p-name">Meriam Ammari</div>
+      <div class="p-role small">Nutrition Coach</div>
+      <div class="profile-sep"></div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item active">Dashboard</a>
+      <a class="nav-item">Meals</a>
+      <a class="nav-item">Profile</a>
+      <a class="nav-item">Progress</a>
+      <a class="nav-item">Goals</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="title-block">
+        <h1>Nutrition Centre</h1>
+          <p class="subtitle">Track calories, meals and trends.</p>
+          
+      </div>
+
+      <div class="actions">
+        <button class="icon-btn">+</button>
+        <button class="icon-btn">?</button>
+        <div class="user-chip">
+          <div class="user-initials">MA</div>
+          <span>Meriam Ammari</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- BANNER -->
+    <div class="banner">
+      <div class="badge">🔥</div>
+      <div>
+        <div class="b-title">Welcome back</div>
+        <div class="b-sub">Overview of your nutrition and activity</div>
+      </div>
+      <div class="motivation">✅ Great consistency</div>
+    </div>
+
+    <!-- DASH GRID -->
+    <div class="dashboard-grid">
+      <!-- Row 1: Goal + Meals logged -->
+      <section class="card goal">
+        <h3 class="card-title">Nutrition Goal</h3>
+        <div class="goal-body">
+          <div class="donut-placeholder">
+            <app-progress-ring [percentage]="65" [size]="120"></app-progress-ring>
+          </div>
+          <div class="goal-stats">
+            <div class="macro">
+              <div class="m-name">Protein</div>
+              <div class="m-value" style="color:var(--macro-protein)">112g</div>
+            </div>
+            <div class="macro">
+              <div class="m-name">Carbs</div>
+              <div class="m-value" style="color:var(--macro-carbs)">198g</div>
+            </div>
+            <div class="macro">
+              <div class="m-name">Fat</div>
+              <div class="m-value" style="color:var(--macro-fat)">56g</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card meals-logged">
+        <h3 class="card-title">Meals logged this week</h3>
+        <div class="meals-body">
+          <div class="big-number">{{ caloriesByMeal.length || 0 }}</div>
+          <div class="small-note">meals logged</div>
+          <div class="mini-breakdown">
+            <div>Breakfast: 12</div>
+            <div>Lunch: 18</div>
+            <div>Dinner: 10</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Row 2: Weekly calories chart (wide) -->
+      <section class="card weekly">
+        <h3 class="card-title">Weekly Calories</h3>
+        <div class="chart-container chart-large">
+          <app-calories-line-chart [daily]="daily" [goal]="2500"></app-calories-line-chart>
+        </div>
+      </section>
+
+      <!-- Row 3: three small charts -->
+      <section class="card meal">
+        <h3 class="card-title">Calories per Meal</h3>
+        <div class="chart-container chart-small">
+          <app-calories-by-meal-chart [data]="caloriesByMeal"></app-calories-by-meal-chart>
+        </div>
+      </section>
+
+      <section class="card score">
+        <h3 class="card-title">Calories per Food Score</h3>
+        <div class="chart-container chart-small">
+          <app-food-score-chart [data]="caloriesByScore"></app-food-score-chart>
+        </div>
+      </section>
+
+      <section class="card rel">
+        <h3 class="card-title">Meal Relationship</h3>
+        <div class="chart-container chart-small">
+          <app-meal-relationship-chart [data]="mealRelationship"></app-meal-relationship-chart>
+        </div>
+      </section>
+
+      <!-- Row 4: table -->
+      <section class="card table">
+        <h3 class="card-title">Top 10 Most Consumed - Unhealthy Foods</h3>
+        <div class="table-wrap">
+          <app-meals-table [rows]="topUnhealthyFoods"></app-meals-table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>

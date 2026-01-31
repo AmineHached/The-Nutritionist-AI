@@ -1,0 +1,10 @@
+stages:
+  train:
+    cmd: python ai_service/backend/vision/train.py --epochs 2 --data_dir ai_service/data
+    deps:
+      - ai_service/data
+      - ai_service/backend/vision/train.py
+      - ai_service/backend/vision/model_arch.py
+    outs:
+      - food_model.pth
+      - food_model_classes.json

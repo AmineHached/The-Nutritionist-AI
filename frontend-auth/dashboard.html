@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Nutritionist</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard">
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="icon">🏆</div>
+            <h2>Mon Espace Nutrition</h2>
+            <p>Gérez votre profil et suivez vos objectifs</p>
+        </div>
+
+        <div class="dashboard-content">
+            <h1>Bonjour <span id="userName">!</span></h1>
+            <p>Connecté avec : <strong id="userEmail"></strong></p>
+        </div>
+
+        <div class="user-info">
+            <h3>📊 Vos informations</h3>
+            <div class="user-stats">
+                <div class="stat-card">
+                    <span class="value" id="userWeight">-</span>
+                    <span class="label">Poids (kg)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="value" id="userHeight">-</span>
+                    <span class="label">Taille (cm)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="value" id="userAge">-</span>
+                    <span class="label">Âge</span>
+                </div>
+                <div class="stat-card">
+                    <span class="value" id="userIMC">-</span>
+                    <span class="label">IMC</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-links" style="border-top: none; padding-top: 0;">
+            <button onclick="logout()" class="btn-secondary" style="width: 100%; margin-top: 0;">
+                🚪 Se déconnecter
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Afficher les informations de l'utilisateur
+        const userEmail = localStorage.getItem('userEmail');
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+
+        if (!userEmail) {
+            // Rediriger vers la page de connexion si pas connecté
+            window.location.href = 'index.html';
+        } else {
+            document.getElementById('userEmail').textContent = userEmail;
+
+            // Afficher les données utilisateur si disponibles
+            if (userData.username) {
+                document.getElementById('userName').textContent = userData.username;
+            }
+
+            if (userData.poids) {
+                document.getElementById('userWeight').textContent = userData.poids;
+            }
+
+            if (userData.taille) {
+                document.getElementById('userHeight').textContent = userData.taille;
+            }
+
+            if (userData.age) {
+                document.getElementById('userAge').textContent = userData.age;
+            }
+
+            // Calculer l'IMC si poids et taille sont disponibles
+            if (userData.poids && userData.taille) {
+                const imc = (userData.poids / Math.pow(userData.taille / 100, 2)).toFixed(1);
+                document.getElementById('userIMC').textContent = imc;
+
+                // Ajouter une classe pour colorer l'IMC selon les normes
+                const imcElement = document.getElementById('userIMC');
+                if (imc < 18.5) {
+                    imcElement.style.color = '#FF6B35'; // Sous-poids
+                } else if (imc >= 18.5 && imc < 25) {
+                    imcElement.style.color = '#28A745'; // Normal
+                } else if (imc >= 25 && imc < 30) {
+                    imcElement.style.color = '#FFC107'; // Surpoids
+                } else {
+                    imcElement.style.color = '#DC3545'; // Obésité
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userData');
+            window.location.href = 'index.html';
+        }
+
+        // Animation d'entrée
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.querySelector('.auth-container');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+                container.style.transition = 'all 0.6s ease-out';
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

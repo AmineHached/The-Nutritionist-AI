@@ -1,0 +1,36 @@
+name: ML Training Pipeline
+
+on:
+  push:
+    paths:
+      - 'ai_service/data/**'
+      - 'ai_service/backend/vision/**'
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ai_service/requirements.txt
+        pip install torch torchvision mlflow
+        
+    - name: Train Model
+      run: |
+        export PYTHONPATH=$PYTHONPATH:$(pwd)/ai_service
+        python ai_service/backend/vision/train.py --epochs 2 --data_dir ai_service/data
+      
+    - name: Archive Model
+      uses: actions/upload-artifact@v4
+      with:
+        name: food-model
+        path: food_model.pth

@@ -6,6 +6,8 @@ from torchvision import models
 import logging
 import os
 import sys
+import mlflow
+import mlflow.pytorch
 
 # Add root directory to path
 sys.path.append(os.getcwd())
@@ -30,17 +32,13 @@ def train_model(data_dir, num_epochs=10, batch_size=32, model_save_path="food_mo
         logger.error("No classes found. Please ensure 'data/food-101/images' has subdirectories with images.")
         return
 
-    # Load Pretrained ResNet
-    model = models.resnet50(pretrained=True)
-    
-    # Replace final layer
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, num_classes)
+    # Load Model Architecture from MVC structure
+    from backend.vision.model_arch import get_food_model
+    model = get_food_model(num_classes, pretrained=True)
     
     model = model.to(device)
     
     criterion = nn.CrossEntropyLoss()
-
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
     # Save Class Mapping immediately so inference works even if training stops
@@ -49,6 +47,13 @@ def train_model(data_dir, num_epochs=10, batch_size=32, model_save_path="food_mo
     with open(classes_path, "w") as f:
         json.dump(train_dataset.classes, f)
     logger.info(f"Class mapping saved to {classes_path}")
+
+    # MLflow Setup
+    mlflow.set_experiment("Food_Vision_Training")
+    with mlflow.start_run():
+        mlflow.log_param("epochs", num_epochs)
+        mlflow.log_param("batch_size", batch_size)
+        mlflow.log_param("num_classes", num_classes)
 
     # Training Loop
     from tqdm import tqdm
@@ -88,9 +93,16 @@ def train_model(data_dir, num_epochs=10, batch_size=32, model_save_path="food_mo
             
             logger.info(f"Epoch {epoch}/{num_epochs - 1} | Loss: {epoch_loss:.4f} | Acc: {epoch_acc:.4f}")
             
+            # MLflow logging
+            mlflow.log_metric("loss", epoch_loss, step=epoch)
+            mlflow.log_metric("accuracy", float(epoch_acc), step=epoch)
+            
             # SAVE CHECKPOINT after every epoch
             torch.save(model.state_dict(), model_save_path)
             logger.info(f"Checkpoint saved to {model_save_path}")
+            
+        # Log the final model
+        mlflow.pytorch.log_model(model, "model")
 
     except KeyboardInterrupt:
         logger.info("Training interrupted by user. Saving current state...")
