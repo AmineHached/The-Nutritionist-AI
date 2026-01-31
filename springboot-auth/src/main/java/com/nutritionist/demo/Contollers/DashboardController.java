@@ -36,8 +36,8 @@ public class DashboardController {
      * Retourne les calories quotidiennes de la semaine passée pour un utilisateur
      * @param email L'email de l'utilisateur
      */
-    @GetMapping("/daily-calories")
-    public List<DashboardData.DayCalories> getDailyCalories(@RequestParam String email) {
+    @GetMapping("/daily-calories/{email}")
+    public List<DashboardData.DayCalories> getDailyCalories(@PathVariable String email) {
         Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) return Collections.emptyList();
 
@@ -69,8 +69,8 @@ public class DashboardController {
      * Retourne les calories par type de repas pour un utilisateur
      * @param email L'email de l'utilisateur
      */
-    @GetMapping("/calories-by-meal")
-    public List<DashboardData.CaloriesByMeal> getCaloriesByMeal(@RequestParam String email) {
+    @GetMapping("/calories-by-meal/{email}")
+    public List<DashboardData.CaloriesByMeal> getCaloriesByMeal(@PathVariable String email) {
         Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) return Collections.emptyList();
         User user = optUser.get();
@@ -91,8 +91,8 @@ public class DashboardController {
      * Retourne les calories par score alimentaire pour un utilisateur
      * @param email L'email de l'utilisateur
      */
-    @GetMapping("/calories-by-score")
-    public List<DashboardData.CaloriesByScore> getCaloriesByScore(@RequestParam String email) {
+    @GetMapping("/calories-by-score/{email}")
+    public List<DashboardData.CaloriesByScore> getCaloriesByScore(@PathVariable String email) {
         Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) return Collections.emptyList();
         User user = optUser.get();
@@ -116,8 +116,8 @@ public class DashboardController {
      * Retourne les aliments malsains les plus consommés pour un utilisateur
      * @param email L'email de l'utilisateur
      */
-    @GetMapping("/top-unhealthy-foods")
-    public List<DashboardData.UnhealthyFoodRow> getTopUnhealthyFoods(@RequestParam String email) {
+    @GetMapping("/top-unhealthy-foods/{email}")
+    public List<DashboardData.UnhealthyFoodRow> getTopUnhealthyFoods(@PathVariable String email) {
         Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) return Collections.emptyList();
         User user = optUser.get();
@@ -153,8 +153,8 @@ public class DashboardController {
      * Retourne la relation entre repas (calories et glucides) pour un utilisateur
      * @param email L'email de l'utilisateur
      */
-    @GetMapping("/meal-relationship")
-    public List<DashboardData.MealRelationshipPoint> getMealRelationship(@RequestParam String email) {
+    @GetMapping("/meal-relationship/{email}")
+    public List<DashboardData.MealRelationshipPoint> getMealRelationship(@PathVariable String email) {
         Optional<User> optUser = userRepository.findByEmail(email);
         if (optUser.isEmpty()) return Collections.emptyList();
         User user = optUser.get();

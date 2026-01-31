@@ -95,10 +95,26 @@ export class MealsComponent implements OnInit {
     this.http.post<any>(`/api/ai/analyze?user_email=${encodeURIComponent(email)}`, formData).subscribe({
       next: (response) => {
         console.log('AI Analysis Result:', response);
-        this.analysisResult = typeof response === 'string' ? JSON.parse(response) : response;
-        this.isAnalyzing = false;
-        // Reload history after successful analysis
-        this.loadHistory();
+        try {
+          if (typeof response === 'string') {
+            const trimmed = response.trim();
+            if (trimmed.startsWith('<')) {
+              // Server returned HTML (likely an error page or index.html)
+              throw new Error('Server returned HTML instead of JSON');
+            }
+            this.analysisResult = JSON.parse(response);
+          } else {
+            this.analysisResult = response;
+          }
+          this.isAnalyzing = false;
+          // Reload history after successful analysis
+          this.loadHistory();
+        } catch (parseErr) {
+          console.error('Failed to parse AI response:', parseErr, response);
+          this.analysisResult = null;
+          this.error = 'Erreur lors de l\'analyse: réponse invalide du serveur.';
+          this.isAnalyzing = false;
+        }
       },
       error: (err) => {
         console.error('AI Analysis Error:', err);
