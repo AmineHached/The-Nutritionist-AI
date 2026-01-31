@@ -42,22 +42,22 @@
                     style="text-align: left; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 12px;">
                     <!-- Health Score -->
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <span style="font-size: 3rem;">{{ analysisResult.health_score >= 70 ? '🌟' :
-                            analysisResult.health_score >= 40 ? '⚠️' : '🔴' }}</span>
-                        <h3 style="margin: 10px 0;">Score Santé: {{ analysisResult.health_score }}/100</h3>
-                        <p style="color: #666;">{{ analysisResult.health_summary }}</p>
+                        <span style="font-size: 3rem;">{{ (analysisResult?.health_score || 0) >= 70 ? '🌟' :
+                            (analysisResult?.health_score || 0) >= 40 ? '⚠️' : '🔴' }}</span>
+                        <h3 style="margin: 10px 0;">Score Santé: {{ analysisResult?.health_score || 0 }}/100</h3>
+                        <p style="color: #666;">{{ analysisResult?.health_summary || '' }}</p>
                     </div>
 
                     <!-- Food Items -->
                     <h4 style="margin-bottom: 10px;">🍽️ Aliments détectés:</h4>
-                    <div *ngFor="let item of analysisResult.food_items"
+                    <div *ngFor="let item of (analysisResult?.food_items || [])"
                         style="background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                         <strong>{{ item.name }}</strong> <span style="color: #888;">({{ item.portion_desc }})</span>
                         <div style="display: flex; gap: 10px; margin-top: 5px; font-size: 0.9em;">
-                            <span>🔥 {{ item.nutrition.calories_kcal }} kcal</span>
-                            <span>🥩 {{ item.nutrition.protein_g }}g</span>
-                            <span>🍞 {{ item.nutrition.carbs_g }}g</span>
-                            <span>🥑 {{ item.nutrition.fat_g }}g</span>
+                            <span>🔥 {{ item?.nutrition?.calories_kcal || 0 }} kcal</span>
+                            <span>🥩 {{ item?.nutrition?.protein_g || 0 }}g</span>
+                            <span>🍞 {{ item?.nutrition?.carbs_g || 0 }}g</span>
+                            <span>🥑 {{ item?.nutrition?.fat_g || 0 }}g</span>
                         </div>
                     </div>
 
@@ -67,18 +67,18 @@
                         <h4 style="margin-bottom: 10px;">📊 Total Nutritionnel</h4>
                         <div
                             style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center;">
-                            <div><strong>{{ analysisResult.total_nutrition.calories_kcal
+                                <div><strong>{{ analysisResult?.total_nutrition?.calories_kcal || 0
                                     }}</strong><br><small>Calories</small></div>
-                            <div><strong>{{ analysisResult.total_nutrition.protein_g
+                                <div><strong>{{ analysisResult?.total_nutrition?.protein_g || 0
                                     }}g</strong><br><small>Protéines</small></div>
-                            <div><strong>{{ analysisResult.total_nutrition.carbs_g
+                                <div><strong>{{ analysisResult?.total_nutrition?.carbs_g || 0
                                     }}g</strong><br><small>Glucides</small></div>
-                            <div><strong>{{ analysisResult.total_nutrition.fat_g }}g</strong><br><small>Lipides</small>
-                            </div>
-                            <div><strong>{{ analysisResult.total_nutrition.fiber_g }}g</strong><br><small>Fibres</small>
-                            </div>
-                            <div><strong>{{ analysisResult.total_nutrition.sugar_g }}g</strong><br><small>Sucres</small>
-                            </div>
+                                <div><strong>{{ analysisResult?.total_nutrition?.fat_g || 0 }}g</strong><br><small>Lipides</small>
+                                </div>
+                                <div><strong>{{ analysisResult?.total_nutrition?.fiber_g || 0 }}g</strong><br><small>Fibres</small>
+                                </div>
+                                <div><strong>{{ analysisResult?.total_nutrition?.sugar_g || 0 }}g</strong><br><small>Sucres</small>
+                                </div>
                         </div>
                     </div>
 

@@ -35,7 +35,9 @@ export class MealsComponent implements OnInit {
 
     // Get user email from localStorage (Browser only)
     if (isPlatformBrowser(this.platformId)) {
-      this.userEmail = localStorage.getItem('userEmail');
+      // Try a few common keys for stored email
+      this.userEmail = localStorage.getItem('userEmail') || localStorage.getItem('email') || localStorage.getItem('user') || null;
+      console.log('MealsComponent: detected userEmail from localStorage:', this.userEmail);
       if (this.userEmail) {
         this.loadHistory();
       }
@@ -44,7 +46,7 @@ export class MealsComponent implements OnInit {
 
   loadHistory(): void {
     if (!this.userEmail) return;
-
+    console.log('Loading history for email=', this.userEmail);
     this.http.get<any[]>('/api/history/by-email', { params: { email: this.userEmail } }).subscribe({
       next: (data) => {
         console.log('History loaded:', data);
@@ -91,6 +93,7 @@ export class MealsComponent implements OnInit {
 
     // Pass user email as query param
     const email = this.userEmail || 'user@example.com';
+    console.log('Analyzing image for email=', email);
 
     this.http.post<any>(`/api/ai/analyze?user_email=${encodeURIComponent(email)}`, formData).subscribe({
       next: (response) => {
@@ -109,6 +112,10 @@ export class MealsComponent implements OnInit {
           this.isAnalyzing = false;
           // Reload history after successful analysis
           this.loadHistory();
+          // Notify other parts of the app (dashboard) that history changed
+          try {
+            window.dispatchEvent(new CustomEvent('history-updated', { detail: { email } }));
+          } catch (e) { }
         } catch (parseErr) {
           console.error('Failed to parse AI response:', parseErr, response);
           this.analysisResult = null;

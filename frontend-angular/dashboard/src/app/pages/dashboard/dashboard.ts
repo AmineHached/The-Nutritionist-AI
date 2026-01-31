@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http'; // Added this import
@@ -33,7 +33,7 @@ import { RouterLink } from '@angular/router';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   daily: DayCalories[] = [];
   caloriesByMeal: CaloriesByMeal[] = [];
   caloriesByScore: CaloriesByScore[] = [];
@@ -68,6 +68,25 @@ export class DashboardComponent implements OnInit {
       this.routeUsername = params['username'];
       this.loadAllData();
     });
+
+    // Listen for history updates from other parts of the app
+    window.addEventListener('history-updated', this.onHistoryUpdated as EventListener);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('history-updated', this.onHistoryUpdated as EventListener);
+  }
+
+  private onHistoryUpdated = (ev: any) => {
+    try {
+      const email = ev?.detail?.email || this.userService.getUserEmail();
+      if (email) {
+        console.log('Dashboard: detected history-updated event, reloading data for', email);
+        this.loadAllData();
+      }
+    } catch (e) {
+      console.error('Error handling history-updated event', e);
+    }
   }
 
   loadAllData(): void {
