@@ -14,7 +14,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL_ID = os.getenv("GROQ_MODEL_ID", "llama-3.2-11b-vision-preview")
+# Use a maintained default model; allow override via env
+GROQ_MODEL_ID = os.getenv("GROQ_MODEL_ID", "llama-3.3-70b-versatile")
 SPRINGBOOT_API_URL = os.getenv("SPRINGBOOT_API_URL", "http://localhost:8080")
 
 SYSTEM_PROMPT = """
@@ -62,7 +63,10 @@ async def analyze_image(image_bytes: bytes, media_type: str = "image/jpeg", user
     await manager.broadcast("LOG: Starting Image Analysis...")
     
     if not GROQ_API_KEY:
-        raise RuntimeError("GROQ_API_KEY is not set.")
+        await manager.broadcast("WARN: GROQ_API_KEY is not set. Skipping Groq requests and using local fallbacks.")
+        use_groq = False
+    else:
+        use_groq = True
 
     try:
         img = Image.open(io.BytesIO(image_bytes))
@@ -121,37 +125,43 @@ async def analyze_image(image_bytes: bytes, media_type: str = "image/jpeg", user
             }
         ]
 
-    headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {GROQ_API_KEY}" if GROQ_API_KEY else "", "Content-Type": "application/json"}
     payload = {"model": current_model, "messages": messages, "max_tokens": 1024, "temperature": 0.1}
-    
+
     try:
-        await manager.broadcast(f"LOG: Sending request to Groq API with model: {current_model}...")
-        response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=60)
-        
-        # Debug: print full response if error
-        if response.status_code != 200:
-            print(f"Groq API Error {response.status_code}: {response.text}")
-            await manager.broadcast(f"LOG: Groq Error: {response.status_code}")
-            
-            # Fallback to text-only if vision fails
-            if current_model == "llama-3.2-11b-vision-preview":
-                await manager.broadcast("LOG: Vision failed, trying text-only fallback...")
-                fallback_model = "llama-3.3-70b-versatile"
-                fallback_messages = [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": f"Analyze a typical meal photo. Provide general nutritional breakdown for a balanced meal in JSON format."}
-                ]
-                fallback_payload = {"model": fallback_model, "messages": fallback_messages, "max_tokens": 1024, "temperature": 0.1}
-                response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=fallback_payload, timeout=60)
-        
-        response.raise_for_status()
-        
-        content = response.json()['choices'][0]['message']['content']
-        content = content.replace("```json", "").replace("```", "").strip()
-        data = json.loads(content)
-        
-        await manager.broadcast("LOG: Analysis Complete.")
-        analysis_result = AnalysisResponse(**data)
+        if use_groq:
+            await manager.broadcast(f"LOG: Sending request to Groq API with model: {current_model}...")
+            response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=60)
+            # Debug: print full response if error
+            if response.status_code != 200:
+                print(f"Groq API Error {response.status_code}: {response.text}")
+                await manager.broadcast(f"LOG: Groq Error: {response.status_code}")
+
+                # Fallback to text-only if vision fails and we were attempting vision model
+                if current_model and "vision" in current_model:
+                    await manager.broadcast("LOG: Vision failed, trying text-only fallback...")
+                    fallback_model = "llama-3.3-70b-versatile"
+                    fallback_messages = [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": f"Analyze a typical meal photo. Provide general nutritional breakdown for a balanced meal in JSON format."}
+                    ]
+                    fallback_payload = {"model": fallback_model, "messages": fallback_messages, "max_tokens": 1024, "temperature": 0.1}
+                    response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=fallback_payload, timeout=60)
+
+            response.raise_for_status()
+
+            try:
+                content = response.json().get('choices', [])[0].get('message', {}).get('content', '')
+                content = content.replace("```json", "").replace("```", "").strip()
+                data = json.loads(content)
+                await manager.broadcast("LOG: Analysis Complete.")
+                analysis_result = AnalysisResponse(**data)
+            except Exception as parse_exc:
+                print(f"Groq parsing error: {parse_exc}")
+                raise parse_exc
+        else:
+            # No Groq API key: skip external call and build a fallback below
+            raise RuntimeError("Groq not available; using local fallback")
         
         # --- Save to Spring Boot Backend ---
         try:
@@ -162,16 +172,96 @@ async def analyze_image(image_bytes: bytes, media_type: str = "image/jpeg", user
                 "protein": analysis_result.total_nutrition.protein_g,
                 "carbs": analysis_result.total_nutrition.carbs_g,
                 "fat": analysis_result.total_nutrition.fat_g,
-                "foodItems": ", ".join([item.name for item in analysis_result.food_items]),
-                "createdAt": java_iso_now()
+                "foodItems": ", ".join([item.name for item in analysis_result.food_items])
             }
-            requests.post(f"{SPRINGBOOT_API_URL}/api/history/save", json=history_payload, timeout=5)
-            await manager.broadcast("LOG: Saved to history.")
+            try:
+                resp = requests.post(f"{SPRINGBOOT_API_URL}/api/history/save", json=history_payload, timeout=5)
+                if resp.status_code not in (200, 201):
+                    print(f"Save history failed: {resp.status_code} {resp.text}")
+                    await manager.broadcast(f"WARN: Failed to save history: {resp.status_code}")
+                else:
+                    await manager.broadcast("LOG: Saved to history.")
+            except Exception as e:
+                print(f"Save history error: {e}")
+                await manager.broadcast(f"WARN: Save history exception: {e}")
         except Exception as e:
             print(f"Save history error: {e}")
 
         return analysis_result
     except Exception as e:
         print(f"Vision service error: {e}")
-        raise e
+        await manager.broadcast(f"ERROR: Vision service failed - {str(e)}")
+        # Fallback: return a minimal AnalysisResponse based on local prediction so Spring Boot + UI doesn't crash
+        try:
+            fallback_item = {
+                "name": label if label else "Unknown",
+                "confidence": float(conf_score or 0),
+                "portion_desc": "Unknown",
+                "weight_g": 0.0,
+                "nutrition": {
+                    "calories_kcal": 0.0,
+                    "protein_g": 0.0,
+                    "carbs_g": 0.0,
+                    "fat_g": 0.0,
+                    "sugar_g": 0.0,
+                    "fiber_g": 0.0
+                },
+                "health_rating": "Unknown"
+            }
+
+            fallback_data = {
+                "food_items": [fallback_item],
+                "total_nutrition": {
+                    "calories_kcal": 0.0,
+                    "protein_g": 0.0,
+                    "carbs_g": 0.0,
+                    "fat_g": 0.0,
+                    "sugar_g": 0.0,
+                    "fiber_g": 0.0
+                },
+                "health_score": 0,
+                "health_summary": "Analysis unavailable; showing best-effort local label.",
+                "recommendations": [],
+                "warnings": []
+            }
+            # Try to provide a best-effort nutritional estimate from a small local lookup
+            try:
+                estimates = {
+                    "salad": {"calories_kcal": 250, "protein_g": 6, "carbs_g": 20, "fat_g": 15, "fiber_g": 5, "sugar_g": 4},
+                    "pizza": {"calories_kcal": 285, "protein_g": 12, "carbs_g": 36, "fat_g": 10, "fiber_g": 2, "sugar_g": 3},
+                    "burger": {"calories_kcal": 354, "protein_g": 17, "carbs_g": 29, "fat_g": 20, "fiber_g": 1, "sugar_g": 6},
+                    "rice": {"calories_kcal": 206, "protein_g": 4.2, "carbs_g": 45, "fat_g": 0.4, "fiber_g": 0.6, "sugar_g": 0.1},
+                    "egg": {"calories_kcal": 78, "protein_g": 6.3, "carbs_g": 0.6, "fat_g": 5.3, "fiber_g": 0, "sugar_g": 0.6},
+                    "unknown": None
+                }
+
+                key = (label or "").lower()
+                found = None
+                if key in estimates:
+                    found = estimates[key]
+                else:
+                    for k in estimates:
+                        if k != "unknown" and k in key:
+                            found = estimates[k]
+                            break
+
+                if found:
+                    fallback_data["food_items"][0]["nutrition"] = {
+                        "calories_kcal": found["calories_kcal"],
+                        "protein_g": found["protein_g"],
+                        "carbs_g": found["carbs_g"],
+                        "fat_g": found["fat_g"],
+                        "sugar_g": found["sugar_g"],
+                        "fiber_g": found["fiber_g"]
+                    }
+                    fallback_data["total_nutrition"] = fallback_data["food_items"][0]["nutrition"].copy()
+                    fallback_data["health_score"] = 60
+                    fallback_data["health_summary"] = "Estimated from a local heuristic match."
+            except Exception:
+                pass
+
+            return AnalysisResponse(**fallback_data)
+        except Exception:
+            # As last resort re-raise
+            raise e
 

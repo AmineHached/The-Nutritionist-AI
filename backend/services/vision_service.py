@@ -7,7 +7,7 @@ from backend.vision.inference import vision_service as local_vision
 
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL_ID = os.getenv("GROQ_MODEL_ID", "llama-3.2-11b-vision-preview") 
+GROQ_MODEL_ID = os.getenv("GROQ_MODEL_ID", "llama-3.3-70b-versatile")
 
 SYSTEM_PROMPT = """
 You are an expert nutritionist and computer vision AI. 
@@ -102,8 +102,8 @@ async def analyze_image(image_bytes: bytes, media_type: str = "image/jpeg") -> A
         print(msg)
         await manager.broadcast(msg)
         
-        # Switch to Text Model
-        groq_model = "llama-3.3-70b-versatile"
+        # Use configured Groq model (text-capable)
+        groq_model = GROQ_MODEL_ID
         
         # Text-Only Prompt
         prompt_content = f"""
@@ -156,7 +156,8 @@ async def analyze_image(image_bytes: bytes, media_type: str = "image/jpeg") -> A
         msg = "LOG: Low Confidence. Using VISION Fallback (Model: Llama 4 Maverick)."
         print(msg)
         await manager.broadcast(msg)
-        groq_model = "llama-3.2-11b-vision-preview" 
+        # Use configured Groq model (vision-capable if provided)
+        groq_model = GROQ_MODEL_ID
         
         base64_image = base64.b64encode(processed_image_bytes).decode('utf-8')
         
@@ -186,25 +187,121 @@ async def analyze_image(image_bytes: bytes, media_type: str = "image/jpeg") -> A
     }
     
     try:
-        await manager.broadcast("LOG: Sending request to Groq API...")
-        response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=60)
-        if not response.ok:
-            error_msg = f"Groq API Error: {response.status_code} - {response.text}"
-            print(error_msg)
-            await manager.broadcast(f"ERROR: {error_msg}")
-        response.raise_for_status()
-        
-        content = response.json()['choices'][0]['message']['content']
-        # Clean potential markdown
-        content = content.replace("```json", "").replace("```", "").strip()
-        
-        # Parse JSON
-        data = json.loads(content)
-        
-        await manager.broadcast("LOG: Analysis Complete.")
-        # Validate with Pydantic
-        return AnalysisResponse(**data)
-        
+      await manager.broadcast("LOG: Sending request to Groq API...")
+      # Debug: log a trimmed payload so we can inspect failures
+      try:
+        debug_payload = json.dumps(payload)[:4000]
+      except Exception:
+        debug_payload = str(payload)
+      print("DEBUG: Groq payload:\n", debug_payload)
+      await manager.broadcast(f"DEBUG: Sending payload to Groq (trimmed): {debug_payload[:1000]}")
+
+      response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers=headers,
+        json=payload,
+        timeout=60,
+      )
+
+      # If API returned a non-OK status, capture and broadcast full response text for debugging
+      if not response.ok:
+        resp_text = response.text
+        error_msg = f"Groq API Error: {response.status_code} - {resp_text}"
+        print(error_msg)
+        await manager.broadcast(f"ERROR: {error_msg}")
+        raise RuntimeError(f"Groq API returned {response.status_code}: {resp_text}")
+
+      # Otherwise parse the successful response safely
+      resp_json = response.json()
+      choices = resp_json.get("choices") if isinstance(resp_json, dict) else None
+      if not choices or not isinstance(choices, list) or not choices[0].get("message"):
+        raise RuntimeError(f"Unexpected Groq response structure: {resp_json}")
+
+      content = choices[0]["message"].get("content", "")
+      # Clean potential markdown
+      content = content.replace("```json", "").replace("```", "").strip()
+
+      # Parse JSON
+      data = json.loads(content)
+
+      await manager.broadcast("LOG: Analysis Complete.")
+      # Validate with Pydantic
+      return AnalysisResponse(**data)
+
     except Exception as e:
-        print(f"Error in vision service: {e}")
-        raise e
+      print(f"Error in vision service: {e}")
+      await manager.broadcast(f"ERROR: Vision service failed - {str(e)}")
+      # Fallback: return a minimal AnalysisResponse based on local prediction so UI doesn't crash
+      try:
+        fallback_item = {
+          "name": label if label else "Unknown",
+          "confidence": float(conf_score or 0),
+          "portion_desc": "Unknown",
+          "weight_g": 0.0,
+          "nutrition": {
+            "calories_kcal": 0.0,
+            "protein_g": 0.0,
+            "carbs_g": 0.0,
+            "fat_g": 0.0,
+            "sugar_g": 0.0,
+            "fiber_g": 0.0
+          },
+          "health_rating": "Unknown"
+        }
+
+        fallback_data = {
+          "food_items": [fallback_item],
+          "total_nutrition": {
+            "calories_kcal": 0.0,
+            "protein_g": 0.0,
+            "carbs_g": 0.0,
+            "fat_g": 0.0,
+            "sugar_g": 0.0,
+            "fiber_g": 0.0
+          },
+          "health_score": 0,
+          "health_summary": "Analysis unavailable; showing best-effort local label.",
+          "recommendations": [],
+          "warnings": []
+        }
+        # Try to provide a best-effort nutritional estimate from a small local lookup
+        try:
+          # simple hardcoded estimates (per common meal item)
+          estimates = {
+            "salad": {"calories_kcal": 250, "protein_g": 6, "carbs_g": 20, "fat_g": 15, "fiber_g": 5, "sugar_g": 4},
+            "pizza": {"calories_kcal": 285, "protein_g": 12, "carbs_g": 36, "fat_g": 10, "fiber_g": 2, "sugar_g": 3},
+            "burger": {"calories_kcal": 354, "protein_g": 17, "carbs_g": 29, "fat_g": 20, "fiber_g": 1, "sugar_g": 6},
+            "rice": {"calories_kcal": 206, "protein_g": 4.2, "carbs_g": 45, "fat_g": 0.4, "fiber_g": 0.6, "sugar_g": 0.1},
+            "egg": {"calories_kcal": 78, "protein_g": 6.3, "carbs_g": 0.6, "fat_g": 5.3, "fiber_g": 0, "sugar_g": 0.6},
+            "unknown": None
+          }
+
+          key = (label or "").lower()
+          found = None
+          # exact match or substring match
+          if key in estimates:
+            found = estimates[key]
+          else:
+            for k in estimates:
+              if k != "unknown" and k in key:
+                found = estimates[k]
+                break
+
+          if found:
+            fallback_data["food_items"][0]["nutrition"] = {
+              "calories_kcal": found["calories_kcal"],
+              "protein_g": found["protein_g"],
+              "carbs_g": found["carbs_g"],
+              "fat_g": found["fat_g"],
+              "sugar_g": found["sugar_g"],
+              "fiber_g": found["fiber_g"]
+            }
+            fallback_data["total_nutrition"] = fallback_data["food_items"][0]["nutrition"].copy()
+            fallback_data["health_score"] = 60
+            fallback_data["health_summary"] = "Estimated from a local heuristic match."
+        except Exception:
+          pass
+        return AnalysisResponse(**fallback_data)
+      except Exception:
+        # As last resort re-raise the original exception
+        raise

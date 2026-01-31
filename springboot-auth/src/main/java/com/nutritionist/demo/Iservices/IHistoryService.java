@@ -11,4 +11,6 @@ public interface IHistoryService {
     List<History> getHistoryByUser(User user);
 
     void deleteHistory(Long id);
+
+    java.util.List<com.nutritionist.demo.Entities.History> getRecent(int limit);
 }

@@ -6,6 +6,8 @@ import com.nutritionist.demo.Repositories.HistoryRepository;
 import com.nutritionist.demo.Entities.History;
 import com.nutritionist.demo.Entities.User;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @Service
 public class HistoryService implements IHistoryService {
@@ -28,5 +30,11 @@ public class HistoryService implements IHistoryService {
     @Override
     public void deleteHistory(Long id) {
         historyRepository.deleteById(id);
+    }
+
+    @Override
+    public java.util.List<History> getRecent(int limit) {
+        PageRequest pr = PageRequest.of(0, Math.max(1, limit), Sort.by(Sort.Direction.DESC, "createdAt"));
+        return historyRepository.findAll(pr).getContent();
     }
 }
